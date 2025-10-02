@@ -5,3 +5,5 @@
 - Secure APK installation using Android FileProvider.
 - Example app demonstrating usage.
 
+## 1.0.1
+- Github added
