@@ -9,9 +9,9 @@ environment:
   flutter: '>=3.3.0'
 
 dependencies:
-  dio: ^5.9.0
   flutter:
     sdk: flutter
+  dio: ^5.9.0
   path_provider: ^2.1.5
   plugin_platform_interface: ^2.0.2
 

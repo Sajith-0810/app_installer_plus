@@ -1,17 +1,30 @@
 import 'dart:io';
-
-import 'package:app_installer_plus/core/apiServices/helper/app_helper.dart';
+import 'package:app_installer_plus/core/apiServices/api_service.dart';
+import 'package:app_installer_plus/core/helper/app_helper.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'app_installer_plus_platform_interface.dart';
 
 class AppInstallerPlus {
+  static final AppInstallerPlus _instance = AppInstallerPlus._internal();
+
+  factory AppInstallerPlus() {
+    return _instance;
+  }
+
+  AppInstallerPlus._internal();
+
   /// Downloads an APK from the given URL and installs it automatically on Android devices.
   /// This method also provides a download progress callback and error handling
   Future<void> downloadAndInstallApk({
     required String downloadFileUrl,
+
+    @Deprecated('Use try-catch with FileDownloadException instead.')
     void Function(String error)? onError,
+
     void Function(double progress)? onProgress,
+
+    /// Use name without extension, .apk will be added automatically. if not provided, it will be saved with the name "downloadApk.apk"
     String? downloadFileName,
   }) async {
     await AppInstallerPlusPlatform.instance.downloadAndInstallApk(
@@ -29,8 +42,7 @@ class AppInstallerPlus {
       Directory? downloadDirectory = await getExternalStorageDirectory();
       if (downloadDirectory == null) return false;
 
-      String apkPath =
-          "${downloadDirectory.path}/${downloadFileName ?? 'downloadApk'}.apk";
+      String apkPath = "${downloadDirectory.path}/${downloadFileName ?? 'downloadApk'}.apk";
 
       File file = File(apkPath);
 
@@ -43,5 +55,9 @@ class AppInstallerPlus {
       return false;
     }
     return false;
+  }
+
+  void cancelDownload() {
+    ApiService().cancelDownload();
   }
 }
