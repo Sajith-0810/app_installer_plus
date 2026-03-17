@@ -21,7 +21,9 @@ class ApiService {
   Future<String?> downloadFile({
     required String downloadFileUrl,
     void Function(double progress)? onProgress,
-    @Deprecated('Use a try-catch block to handle FileDownloadException instead.') void Function(String error)? onError,
+    @Deprecated(
+        'Use a try-catch block to handle FileDownloadException instead.')
+    void Function(String error)? onError,
     void Function(String timeLeft)? onTimeLeft,
     void Function(String speed)? onSpeed,
     void Function(String totalSize)? onTotalSize,
@@ -41,10 +43,12 @@ class ApiService {
           type: DownloadErrorType.storageAccessDenied,
           originalError: "Unable to access storage directory",
         );
-        return _handleErrorBridge(exception, "Unable to access storage directory", onError);
+        return _handleErrorBridge(
+            exception, "Unable to access storage directory", onError);
       }
 
-      String savePath = "${directory.path}/${downloadFileName ?? "downloadApk"}.apk";
+      String savePath =
+          "${directory.path}/${downloadFileName ?? "downloadApk"}.apk";
 
       Response response = await _dio.download(
         downloadFileUrl,
@@ -101,7 +105,8 @@ class ApiService {
           statusCode: response.statusCode,
           originalError: "Server returned status: ${response.statusCode}",
         );
-        return _handleErrorBridge(exception, "Unable to download the file", onError);
+        return _handleErrorBridge(
+            exception, "Unable to download the file", onError);
       }
     } on DioException catch (e, sc) {
       log("DioException in downloadFile", error: e, stackTrace: sc);
@@ -114,8 +119,10 @@ class ApiService {
       return _handleErrorBridge(exception, legacyErrorString, onError);
     } catch (e, sc) {
       log("Unknown Exception in downloadFile", error: e, stackTrace: sc);
-      final exception = FileDownloadException(type: DownloadErrorType.unknown, originalError: e);
-      return _handleErrorBridge(exception, "Error Occurred while downloading the file", onError);
+      final exception = FileDownloadException(
+          type: DownloadErrorType.unknown, originalError: e);
+      return _handleErrorBridge(
+          exception, "Error Occurred while downloading the file", onError);
     }
   }
 

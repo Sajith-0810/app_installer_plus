@@ -43,7 +43,8 @@ class _MyAppState extends State<MyApp> {
       backgroundColor: Colors.white,
 
       /// App Bar
-      appBar: AppBar(title: const Text("App Update Example"), centerTitle: true),
+      appBar:
+          AppBar(title: const Text("App Update Example"), centerTitle: true),
 
       /// Body
       body: Center(
@@ -65,7 +66,7 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ),
               ),
-          
+
               /// Progress Bar
               Padding(
                 padding: const EdgeInsets.all(12),
@@ -83,7 +84,7 @@ class _MyAppState extends State<MyApp> {
                   ],
                 ),
               ),
-          
+
               /// Download Info
               Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -123,7 +124,7 @@ class _MyAppState extends State<MyApp> {
                   ],
                 ),
               ),
-          
+
               /// Download and Install Button and Remove APK Button
               Row(
                 children: [
@@ -147,11 +148,14 @@ class _MyAppState extends State<MyApp> {
                       padding: const EdgeInsets.all(12),
                       child: FilledButton(
                         onPressed: () async {
-                          bool isDeleted = await AppInstallerPlus().removedDownloadedApk(downloadFileName: "test");
+                          bool isDeleted = await AppInstallerPlus()
+                              .removedDownloadedApk(downloadFileName: "test");
                           if (isDeleted) {
                             showSnackBar(message: "Apk Deleted Successfully");
                           } else {
-                            showSnackBar(message: "Deletion UnSuccessful. Either the file does not exist or an error occurred.");
+                            showSnackBar(
+                                message:
+                                    "Deletion UnSuccessful. Either the file does not exist or an error occurred.");
                           }
                         },
                         child: const Text("Delete Apk"),
@@ -160,7 +164,7 @@ class _MyAppState extends State<MyApp> {
                   ),
                 ],
               ),
-          
+
               Row(
                 children: [
                   Expanded(
@@ -242,16 +246,20 @@ class _MyAppState extends State<MyApp> {
           errorMessage = "Request Cancelled";
           break;
         case DownloadErrorType.storageAccessDenied:
-          errorMessage = "Storage access denied. Please grant permissions and try again.";
+          errorMessage =
+              "Storage access denied. Please grant permissions and try again.";
           break;
         case DownloadErrorType.badResponse:
-          errorMessage = "bad response from server. Please check the URL and try again.";
+          errorMessage =
+              "bad response from server. Please check the URL and try again.";
           break;
         case DownloadErrorType.networkTimeout:
-          errorMessage = "Timeout. Please check your internet connection and try again.";
+          errorMessage =
+              "Timeout. Please check your internet connection and try again.";
           break;
         case DownloadErrorType.noInternetConnection:
-          errorMessage = "No internet connection. Please check your connection and try again.";
+          errorMessage =
+              "No internet connection. Please check your connection and try again.";
           break;
         case DownloadErrorType.unknown:
           errorMessage = "An unknown error occurred. Please try again.";
