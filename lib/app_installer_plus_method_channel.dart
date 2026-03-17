@@ -14,13 +14,12 @@ class MethodChannelAppInstallerPlus extends AppInstallerPlusPlatform {
   @override
   Future<void> downloadAndInstallApk({
     required String downloadFileUrl,
-    @Deprecated(
-        'Use try-catch with FileDownloadException instead. This will be removed in v2.0.0.')
-    void Function(String error)? onError,
+    void Function(double progress)? onProgress,
+    @Deprecated('Use try-catch with FileDownloadException instead.') void Function(String error)? onError,
     void Function(String timeLeft)? onTimeLeft,
     void Function(String speed)? onSpeed,
-    void Function(String size)? onDownloadSize,
-    void Function(double progress)? onProgress,
+    void Function(String totalSize)? onTotalSize,
+    void Function(String downloadedSize)? onDownloadedSize,
     String? downloadFileName,
   }) async {
     try {
@@ -36,27 +35,24 @@ class MethodChannelAppInstallerPlus extends AppInstallerPlusPlatform {
         onProgress: onProgress,
         onTimeLeft: onTimeLeft,
         onSpeed: onSpeed,
-        onDownloadSize: onDownloadSize,
+        onTotalSize: onTotalSize,
+        onDownloadedSize: onDownloadedSize,
       );
 
       // 2. If successful, trigger the native installation
       if (filePath != null) {
-        await _channel
-            .invokeMethod<String>('downloadAndInstallApk', {"path": filePath});
+        await _channel.invokeMethod<String>('downloadAndInstallApk', {"path": filePath});
       }
     } on FileDownloadException catch (e, sc) {
       printLog(e.toString(), stackTrace: sc);
       _handleErrorBridge(e, "Error occurred during download", onError);
     } on PlatformException catch (e, sc) {
       printLog(e.toString(), stackTrace: sc);
-      final exception = FileDownloadException(
-          type: DownloadErrorType.unknown, originalError: e);
-      _handleErrorBridge(
-          exception, e.message ?? "Platform Exception occurred", onError);
+      final exception = FileDownloadException(type: DownloadErrorType.unknown, originalError: e);
+      _handleErrorBridge(exception, e.message ?? "Platform Exception occurred", onError);
     } catch (e, sc) {
       printLog(e.toString(), stackTrace: sc);
-      final exception = FileDownloadException(
-          type: DownloadErrorType.unknown, originalError: e);
+      final exception = FileDownloadException(type: DownloadErrorType.unknown, originalError: e);
       _handleErrorBridge(exception, e.toString(), onError);
     }
   }

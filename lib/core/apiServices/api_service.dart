@@ -21,10 +21,11 @@ class ApiService {
   Future<String?> downloadFile({
     required String downloadFileUrl,
     void Function(double progress)? onProgress,
-    void Function(String error)? onError,
+    @Deprecated('Use a try-catch block to handle FileDownloadException instead.') void Function(String error)? onError,
     void Function(String timeLeft)? onTimeLeft,
     void Function(String speed)? onSpeed,
-    void Function(String size)? onDownloadSize,
+    void Function(String totalSize)? onTotalSize,
+    void Function(String downloadedSize)? onDownloadedSize,
     String? downloadFileName,
   }) async {
     _cancelToken = CancelToken();
@@ -40,12 +41,10 @@ class ApiService {
           type: DownloadErrorType.storageAccessDenied,
           originalError: "Unable to access storage directory",
         );
-        return _handleErrorBridge(
-            exception, "Unable to access storage directory", onError);
+        return _handleErrorBridge(exception, "Unable to access storage directory", onError);
       }
 
-      String savePath =
-          "${directory.path}/${downloadFileName ?? "downloadApk"}.apk";
+      String savePath = "${directory.path}/${downloadFileName ?? "downloadApk"}.apk";
 
       Response response = await _dio.download(
         downloadFileUrl,
@@ -57,14 +56,18 @@ class ApiService {
               onProgress(count / total);
             }
 
-            // FIXED: Now using the helper method to return "45.00 MB" instead of a raw double
-            if (onDownloadSize != null) {
-              onDownloadSize(_formatBytes(total));
+            if (onTotalSize != null) {
+              onTotalSize(_formatBytes(total));
+            }
+
+            if (onDownloadedSize != null) {
+              onDownloadedSize(_formatBytes(count));
             }
 
             DateTime now = DateTime.now();
             Duration interval = now.difference(lastUpdateTime);
 
+            // Update speed and time left every 500ms or when finished
             if (interval.inMilliseconds >= 500 || count == total) {
               int bytesSinceLast = count - lastBytes;
               double secondsSinceLast = interval.inMilliseconds / 1000.0;
@@ -98,8 +101,7 @@ class ApiService {
           statusCode: response.statusCode,
           originalError: "Server returned status: ${response.statusCode}",
         );
-        return _handleErrorBridge(
-            exception, "Unable to download the file", onError);
+        return _handleErrorBridge(exception, "Unable to download the file", onError);
       }
     } on DioException catch (e, sc) {
       log("DioException in downloadFile", error: e, stackTrace: sc);
@@ -112,10 +114,8 @@ class ApiService {
       return _handleErrorBridge(exception, legacyErrorString, onError);
     } catch (e, sc) {
       log("Unknown Exception in downloadFile", error: e, stackTrace: sc);
-      final exception = FileDownloadException(
-          type: DownloadErrorType.unknown, originalError: e);
-      return _handleErrorBridge(
-          exception, "Error Occurred while downloading the file", onError);
+      final exception = FileDownloadException(type: DownloadErrorType.unknown, originalError: e);
+      return _handleErrorBridge(exception, "Error Occurred while downloading the file", onError);
     }
   }
 
@@ -168,15 +168,17 @@ class ApiService {
   }
 
   /// Helper to route the error to the callback OR throw the exception
-  Null _handleErrorBridge(
+  String? _handleErrorBridge(
     FileDownloadException exception,
     String legacyString,
     void Function(String)? onErrorCallback,
   ) {
     if (onErrorCallback != null) {
+      // User provided the callback: send legacy error, don't throw exception.
       onErrorCallback(legacyString);
       return null;
     } else {
+      // User did not provide the callback: throw the exception.
       throw exception;
     }
   }

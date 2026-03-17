@@ -9,7 +9,10 @@ A Flutter plugin to **download and install APKs** on Android. Ideal for in-app u
 ## ✨ Features
 
 - Download APK from any direct URL
-- Show download progress
+- Show real-time download progress
+- **[NEW]** Track downloaded size and total file size
+- **[NEW]** Track live download speed and estimated time left
+- **[NEW]** Cancel ongoing downloads
 - Automatically install the APK
 - Uses Android FileProvider to handle secure file access
 
@@ -39,7 +42,7 @@ A Flutter plugin to **download and install APKs** on Android. Ideal for in-app u
 ```
 
 **3. Add Permission**
-- In `android/app/src/main/AndroidManifest.xml`, add these permission:
+- In `android/app/src/main/AndroidManifest.xml`, add these permissions:
 ```xml
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
@@ -52,34 +55,36 @@ A Flutter plugin to **download and install APKs** on Android. Ideal for in-app u
 ```dart
 await AppInstallerPlus().downloadAndInstallApk(
     downloadFileUrl: "https://www.example.com/myapp.apk",
-    onError: (error) {
-      // show the error message here
-    },
     onProgress: (progress) {
       // handle the progress here
+      },
+    onDownloadedSize: (downloadedSize) {
+      // handle the downloaded size here
+      },
+    onTotalSize: (totalSize) {
+      // handle the total size here
+      },
+    onSpeed: (speed) {
+      // handle the download speed here
+      },
+    onTimeLeft: (timeLeft) {
+      // handle the estimated time left here
       },
 );
 ```
 
-- `downloadFileUrl`
-    - **Type:** `String`
-    - **Description:** Direct URL of the APK file to download and install.
-
-- `onError`
-    - **Type:** `Function(String error)`
-    - **Description:** Callback triggered when an error occurs.
-
-- `onProgress`
-    - **Type:** `Function(double progress)`
-    - **Description:**
-        - Tracks real-time download progress.
-        - Value ranges from `0.0` to `1.0` (e.g., `0.5 = 50%`).
-
 **2. Delete the downloaded apk**
 ```dart
-  await AppInstallerPlus().removedDownloadedApk()
+  await AppInstallerPlus().removedDownloadedApk();
 ```
 - Remove the downloaded apk once the process completed
+
+
+**3. Cancel the download request**
+```dart
+  AppInstallerPlus().cancelDownload();
+```
+- Stops an active APK download before it finishes.
 
 
 ## 📦 Installation
@@ -88,4 +93,4 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  app_installer_plus: ^1.0.1
+  app_installer_plus: ^1.1.0

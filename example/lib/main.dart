@@ -16,8 +16,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _urlController = TextEditingController(
+    text: "https://uatapps2.netaccess-india.com/nacl/naclffa23.apk",
+  );
   double downloadPercent = 0;
+  String totalSize = "0";
+  String downloadSpeed = "0";
+  String timeLeft = "0";
+  String downloadedSize = "0";
 
   final OutlineInputBorder _border = const OutlineInputBorder(
     borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -41,79 +47,154 @@ class _MyAppState extends State<MyApp> {
 
       /// Body
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            /// Url Text Form Filed
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: TextFormField(
-                controller: _urlController,
-                decoration: InputDecoration(
-                  hintText: "Paste your download file URL here",
-                  border: _border,
-                  enabledBorder: _border,
-                  focusedBorder: _border,
-                  hintFadeDuration: const Duration(milliseconds: 350),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              /// Url Text Form Filed
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: TextFormField(
+                  controller: _urlController,
+                  decoration: InputDecoration(
+                    hintText: "Paste your download file URL here",
+                    border: _border,
+                    enabledBorder: _border,
+                    focusedBorder: _border,
+                    hintFadeDuration: const Duration(milliseconds: 350),
+                  ),
                 ),
               ),
-            ),
-
-            /// Progress Bar
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Stack(
-                alignment: Alignment.center,
+          
+              /// Progress Bar
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      value: downloadPercent,
+                      strokeCap: StrokeCap.round,
+                      strokeWidth: 5,
+                      strokeAlign: 4,
+                      backgroundColor: Colors.grey.shade100,
+                    ),
+                    Text("${(downloadPercent * 100).toStringAsFixed(0)}%"),
+                  ],
+                ),
+              ),
+          
+              /// Download Info
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  spacing: 10,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text("Total Size")),
+                        Text(totalSize),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(child: Text("Download Speed")),
+                        Text(downloadSpeed),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(child: Text("Downloaded Size")),
+                        Text(downloadedSize),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(child: Text("Estimated Time Left")),
+                        Text(timeLeft),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(child: Text("Process")),
+                        Text("$downloadedSize / $totalSize"),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+          
+              /// Download and Install Button and Remove APK Button
+              Row(
                 children: [
-                  CircularProgressIndicator(
-                    value: downloadPercent,
-                    strokeCap: StrokeCap.round,
-                    strokeWidth: 5,
-                    strokeAlign: 4,
-                    backgroundColor: Colors.grey.shade100,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0).copyWith(top: 15),
+                      child: FilledButton(
+                        onPressed: () async {
+                          if (_urlController.text.trim().isEmpty) {
+                            showSnackBar(message: "Url is mandatory");
+                            return;
+                          }
+                          await onDownloadClicked();
+                        },
+                        child: const Text("Download & Install"),
+                      ),
+                    ),
                   ),
-                  Text("${(downloadPercent * 100).toStringAsFixed(0)}%"),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: FilledButton(
+                        onPressed: () async {
+                          bool isDeleted = await AppInstallerPlus().removedDownloadedApk(downloadFileName: "test");
+                          if (isDeleted) {
+                            showSnackBar(message: "Apk Deleted Successfully");
+                          } else {
+                            showSnackBar(message: "Deletion UnSuccessful. Either the file does not exist or an error occurred.");
+                          }
+                        },
+                        child: const Text("Delete Apk"),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-
-            /// Download and Install Button and Remove APK Button
-            Row(
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0).copyWith(top: 15),
-                    child: FilledButton(
-                      onPressed: () async {
-                        if (_urlController.text.trim().isEmpty) {
-                          showSnackBar(message: "Url is mandatory");
-                          return;
-                        }
-                        await onDownloadClicked();
-                      },
-                      child: const Text("Download & Install"),
+          
+              Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: FilledButton(
+                        onPressed: () async {
+                          AppInstallerPlus().cancelDownload();
+                        },
+                        child: const Text("Cancel Request"),
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: FilledButton(
-                      onPressed: () async {
-                        bool isDeleted = await AppInstallerPlus().removedDownloadedApk();
-                        if (isDeleted) {
-                          showSnackBar(message: "Deleted Successfully");
-                        } else {
-                          showSnackBar(message: "Deleted UnSuccessfully");
-                        }
-                      },
-                      child: const Text("Delete Apk"),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: FilledButton(
+                        onPressed: () async {
+                          setState(() {
+                            downloadPercent = 0;
+                            totalSize = "0";
+                            downloadSpeed = "0";
+                            timeLeft = "0";
+                            downloadedSize = "0";
+                          });
+                        },
+                        child: const Text("Clear"),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -124,14 +205,29 @@ class _MyAppState extends State<MyApp> {
       await AppInstallerPlus().downloadAndInstallApk(
         downloadFileUrl: _urlController.text,
         downloadFileName: "test",
-        onDownloadSize: (size) {
-          printLog("File Size: $size bytes");
+        onDownloadedSize: (downloadedSize2) {
+          printLog("Downloaded Size: $downloadedSize bytes");
+          setState(() {
+            downloadedSize = downloadedSize2;
+          });
+        },
+        onTotalSize: (size) {
+          printLog("Total Size : $size bytes/s");
+          setState(() {
+            totalSize = size;
+          });
         },
         onSpeed: (speed) {
           printLog("Download Speed: $speed bytes/s");
+          setState(() {
+            downloadSpeed = speed;
+          });
         },
-        onTimeLeft: (timeLeft) {
+        onTimeLeft: (timeLeft2) {
           printLog("Estimated Time Left: $timeLeft seconds");
+          setState(() {
+            timeLeft = timeLeft2;
+          });
         },
         onProgress: (progress) {
           setState(() {
@@ -140,26 +236,29 @@ class _MyAppState extends State<MyApp> {
         },
       );
     } on FileDownloadException catch (e) {
+      String? errorMessage;
       switch (e.type) {
         case DownloadErrorType.cancelled:
-          showSnackBar(message: "Request Cancelled");
+          errorMessage = "Request Cancelled";
           break;
         case DownloadErrorType.storageAccessDenied:
-          showSnackBar(message: "Storage access denied. Please grant permissions and try again.");
+          errorMessage = "Storage access denied. Please grant permissions and try again.";
           break;
         case DownloadErrorType.badResponse:
-          showSnackBar(message: "bad response from server. Please check the URL and try again.");
+          errorMessage = "bad response from server. Please check the URL and try again.";
           break;
         case DownloadErrorType.networkTimeout:
-          showSnackBar(message: "Timeout. Please check your internet connection and try again.");
+          errorMessage = "Timeout. Please check your internet connection and try again.";
           break;
         case DownloadErrorType.noInternetConnection:
-          showSnackBar(message: "No internet connection. Please check your connection and try again.");
+          errorMessage = "No internet connection. Please check your connection and try again.";
           break;
         case DownloadErrorType.unknown:
-          showSnackBar(message: "An unknown error occurred. Please try again.");
+          errorMessage = "An unknown error occurred. Please try again.";
           break;
       }
+
+      showSnackBar(message: errorMessage);
     } catch (e) {
       showSnackBar(message: "An error occurred: $e");
     }

@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:app_installer_plus/core/apiServices/api_service.dart';
 import 'package:app_installer_plus/core/helper/app_helper.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,14 +19,13 @@ class AppInstallerPlus {
   /// This method also provides a download progress callback and error handling
   Future<void> downloadAndInstallApk({
     required String downloadFileUrl,
+    void Function(double progress)? onProgress,
     @Deprecated('Use try-catch with FileDownloadException instead.')
     void Function(String error)? onError,
-    void Function(double progress)? onProgress,
     void Function(String timeLeft)? onTimeLeft,
     void Function(String speed)? onSpeed,
-    void Function(String size)? onDownloadSize,
-
-    /// Use name without extension, .apk will be added automatically. if not provided, it will be saved with the name "downloadApk.apk"
+    void Function(String totalSize)? onTotalSize,
+    void Function(String downloadedSize)? onDownloadedSize,
     String? downloadFileName,
   }) async {
     await AppInstallerPlusPlatform.instance.downloadAndInstallApk(
@@ -35,7 +35,8 @@ class AppInstallerPlus {
       downloadFileName: downloadFileName,
       onTimeLeft: onTimeLeft,
       onSpeed: onSpeed,
-      onDownloadSize: onDownloadSize,
+      onTotalSize: onTotalSize,
+      onDownloadedSize: onDownloadedSize,
     );
   }
 
