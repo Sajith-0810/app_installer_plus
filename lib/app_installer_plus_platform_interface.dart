@@ -25,13 +25,16 @@ abstract class AppInstallerPlusPlatform extends PlatformInterface {
 
   Future<void> downloadAndInstallApk({
     required String downloadFileUrl,
-
-    @Deprecated('Use try-catch with FileDownloadException instead. This will be removed in v2.0.0.')
+    @Deprecated(
+        'Use try-catch with FileDownloadException instead. This will be removed in v2.0.0.')
     void Function(String error)? onError,
-
+    void Function(String timeLeft)? onTimeLeft,
+    void Function(String speed)? onSpeed,
+    void Function(String size)? onDownloadSize,
     void Function(double progress)? onProgress,
     String? downloadFileName,
   }) {
-    throw UnimplementedError('downloadAndInstallApk() has not been implemented.');
+    throw UnimplementedError(
+        'downloadAndInstallApk() has not been implemented.');
   }
 }

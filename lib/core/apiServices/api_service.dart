@@ -22,34 +22,74 @@ class ApiService {
     required String downloadFileUrl,
     void Function(double progress)? onProgress,
     void Function(String error)? onError,
+    void Function(String timeLeft)? onTimeLeft,
+    void Function(String speed)? onSpeed,
+    void Function(String size)? onDownloadSize,
     String? downloadFileName,
   }) async {
     _cancelToken = CancelToken();
+
+    int lastBytes = 0;
+    DateTime lastUpdateTime = DateTime.now();
+
     try {
       Directory? directory = await getExternalStorageDirectory();
 
-      // 1. Handle Storage Denial
       if (directory == null) {
         final exception = FileDownloadException(
           type: DownloadErrorType.storageAccessDenied,
           originalError: "Unable to access storage directory",
         );
-        return _handleErrorBridge(exception, "Unable to access storage directory", onError);
+        return _handleErrorBridge(
+            exception, "Unable to access storage directory", onError);
       }
 
-      String savePath = "${directory.path}/${downloadFileName ?? "downloadApk"}.apk";
+      String savePath =
+          "${directory.path}/${downloadFileName ?? "downloadApk"}.apk";
+
       Response response = await _dio.download(
         downloadFileUrl,
         savePath,
         cancelToken: _cancelToken,
         onReceiveProgress: (count, total) {
-          if (total > 0 && onProgress != null) {
-            onProgress(count / total);
+          if (total > 0) {
+            if (onProgress != null) {
+              onProgress(count / total);
+            }
+
+            // FIXED: Now using the helper method to return "45.00 MB" instead of a raw double
+            if (onDownloadSize != null) {
+              onDownloadSize(_formatBytes(total));
+            }
+
+            DateTime now = DateTime.now();
+            Duration interval = now.difference(lastUpdateTime);
+
+            if (interval.inMilliseconds >= 500 || count == total) {
+              int bytesSinceLast = count - lastBytes;
+              double secondsSinceLast = interval.inMilliseconds / 1000.0;
+
+              if (secondsSinceLast > 0) {
+                double speedBps = bytesSinceLast / secondsSinceLast;
+
+                if (onSpeed != null) {
+                  onSpeed(_formatSpeed(speedBps));
+                }
+
+                if (onTimeLeft != null && speedBps > 0) {
+                  double remainingBytes = (total - count).toDouble();
+                  double remainingSeconds = remainingBytes / speedBps;
+                  onTimeLeft(_formatTimeLeft(remainingSeconds));
+                }
+              }
+
+              lastBytes = count;
+              lastUpdateTime = now;
+            }
           }
         },
       );
 
-      // 2. Handle Success vs Bad Status Code
       if (response.statusCode == 200) {
         return savePath;
       } else {
@@ -58,32 +98,73 @@ class ApiService {
           statusCode: response.statusCode,
           originalError: "Server returned status: ${response.statusCode}",
         );
-        return _handleErrorBridge(exception, "Unable to download the file", onError);
+        return _handleErrorBridge(
+            exception, "Unable to download the file", onError);
       }
     } on DioException catch (e, sc) {
       log("DioException in downloadFile", error: e, stackTrace: sc);
-
-      // 3. Map DioException to your Enum
       final exception = FileDownloadException(
         type: _mapDioErrorToEnum(e.type),
         statusCode: e.response?.statusCode,
         originalError: e,
       );
-
-      // Get the legacy string for old users, but throw the exception for new users
       String legacyErrorString = _getLegacyErrorMessage(e);
       return _handleErrorBridge(exception, legacyErrorString, onError);
     } catch (e, sc) {
       log("Unknown Exception in downloadFile", error: e, stackTrace: sc);
-
-      // 4. Handle completely unknown crashes
-      final exception = FileDownloadException(type: DownloadErrorType.unknown, originalError: e);
-      return _handleErrorBridge(exception, "Error Occurred while downloading the file", onError);
+      final exception = FileDownloadException(
+          type: DownloadErrorType.unknown, originalError: e);
+      return _handleErrorBridge(
+          exception, "Error Occurred while downloading the file", onError);
     }
   }
 
   void cancelDownload() {
     _cancelToken?.cancel("Download cancelled");
+  }
+
+  /// 2. Formats total size (Bytes -> GB, MB, KB)
+  String _formatBytes(int bytes) {
+    if (bytes <= 0) return "0 B";
+    if (bytes >= 1024 * 1024 * 1024 * 1024) {
+      return "${(bytes / (1024 * 1024 * 1024 * 1024)).toStringAsFixed(2)} TB";
+    } else if (bytes >= 1024 * 1024 * 1024) {
+      return "${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB";
+    } else if (bytes >= 1024 * 1024) {
+      return "${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB";
+    } else if (bytes >= 1024) {
+      return "${(bytes / 1024).toStringAsFixed(2)} KB";
+    } else {
+      return "$bytes B";
+    }
+  }
+
+  /// Formats raw seconds into a clean digital clock string (e.g., "02:30" or "1:15:00")
+  String _formatTimeLeft(double totalSeconds) {
+    int hours = totalSeconds ~/ 3600;
+    int minutes = ((totalSeconds % 3600) ~/ 60);
+    int seconds = (totalSeconds % 60).toInt();
+
+    String minutesStr = minutes.toString().padLeft(2, '0');
+    String secondsStr = seconds.toString().padLeft(2, '0');
+
+    if (hours > 0) {
+      String hoursStr = hours.toString().padLeft(2, '0');
+      return "$hoursStr:$minutesStr:$secondsStr";
+    } else {
+      return "$minutesStr:$secondsStr";
+    }
+  }
+
+  /// Formats raw bytes per second into a readable string
+  String _formatSpeed(double bytesPerSecond) {
+    if (bytesPerSecond >= 1024 * 1024) {
+      return "${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(2)} MB/s";
+    } else if (bytesPerSecond >= 1024) {
+      return "${(bytesPerSecond / 1024).toStringAsFixed(2)} KB/s";
+    } else {
+      return "${bytesPerSecond.toStringAsFixed(0)} B/s";
+    }
   }
 
   /// Helper to route the error to the callback OR throw the exception

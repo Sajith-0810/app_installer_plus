@@ -5,7 +5,8 @@ class FileDownloadException implements Exception {
   final int? statusCode;
   final dynamic originalError;
 
-  FileDownloadException({required this.type, this.statusCode, this.originalError});
+  FileDownloadException(
+      {required this.type, this.statusCode, this.originalError});
 
   @override
   String toString() => "FileDownloadException: ${type.name}";

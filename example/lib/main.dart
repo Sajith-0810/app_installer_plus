@@ -1,4 +1,7 @@
 import 'package:app_installer_plus/app_installer_plus.dart';
+import 'package:app_installer_plus/core/enums/download_error_type.dart';
+import 'package:app_installer_plus/core/exceptions/file_download_exception.dart';
+import 'package:app_installer_plus/core/helper/app_helper.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -34,10 +37,7 @@ class _MyAppState extends State<MyApp> {
       backgroundColor: Colors.white,
 
       /// App Bar
-      appBar: AppBar(
-        title: const Text("App Update Example"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("App Update Example"), centerTitle: true),
 
       /// Body
       body: Center(
@@ -89,18 +89,7 @@ class _MyAppState extends State<MyApp> {
                           showSnackBar(message: "Url is mandatory");
                           return;
                         }
-
-                        await AppInstallerPlus().downloadAndInstallApk(
-                          downloadFileUrl: _urlController.text,
-                          onError: (error) {
-                            showSnackBar(message: error);
-                          },
-                          onProgress: (progress) {
-                            setState(() {
-                              downloadPercent = progress;
-                            });
-                          },
-                        );
+                        await onDownloadClicked();
                       },
                       child: const Text("Download & Install"),
                     ),
@@ -111,8 +100,7 @@ class _MyAppState extends State<MyApp> {
                     padding: const EdgeInsets.all(12),
                     child: FilledButton(
                       onPressed: () async {
-                        bool isDeleted = await AppInstallerPlus()
-                            .removedDownloadedApk();
+                        bool isDeleted = await AppInstallerPlus().removedDownloadedApk();
                         if (isDeleted) {
                           showSnackBar(message: "Deleted Successfully");
                         } else {
@@ -129,6 +117,52 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+
+  Future<void> onDownloadClicked() async {
+    try {
+      await AppInstallerPlus().downloadAndInstallApk(
+        downloadFileUrl: _urlController.text,
+        downloadFileName: "test",
+        onDownloadSize: (size) {
+          printLog("File Size: $size bytes");
+        },
+        onSpeed: (speed) {
+          printLog("Download Speed: $speed bytes/s");
+        },
+        onTimeLeft: (timeLeft) {
+          printLog("Estimated Time Left: $timeLeft seconds");
+        },
+        onProgress: (progress) {
+          setState(() {
+            downloadPercent = progress;
+          });
+        },
+      );
+    } on FileDownloadException catch (e) {
+      switch (e.type) {
+        case DownloadErrorType.cancelled:
+          showSnackBar(message: "Request Cancelled");
+          break;
+        case DownloadErrorType.storageAccessDenied:
+          showSnackBar(message: "Storage access denied. Please grant permissions and try again.");
+          break;
+        case DownloadErrorType.badResponse:
+          showSnackBar(message: "bad response from server. Please check the URL and try again.");
+          break;
+        case DownloadErrorType.networkTimeout:
+          showSnackBar(message: "Timeout. Please check your internet connection and try again.");
+          break;
+        case DownloadErrorType.noInternetConnection:
+          showSnackBar(message: "No internet connection. Please check your connection and try again.");
+          break;
+        case DownloadErrorType.unknown:
+          showSnackBar(message: "An unknown error occurred. Please try again.");
+          break;
+      }
+    } catch (e) {
+      showSnackBar(message: "An error occurred: $e");
+    }
   }
 
   void showSnackBar({required String message}) {

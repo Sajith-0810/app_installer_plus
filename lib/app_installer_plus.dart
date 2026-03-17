@@ -18,11 +18,12 @@ class AppInstallerPlus {
   /// This method also provides a download progress callback and error handling
   Future<void> downloadAndInstallApk({
     required String downloadFileUrl,
-
     @Deprecated('Use try-catch with FileDownloadException instead.')
     void Function(String error)? onError,
-
     void Function(double progress)? onProgress,
+    void Function(String timeLeft)? onTimeLeft,
+    void Function(String speed)? onSpeed,
+    void Function(String size)? onDownloadSize,
 
     /// Use name without extension, .apk will be added automatically. if not provided, it will be saved with the name "downloadApk.apk"
     String? downloadFileName,
@@ -32,6 +33,9 @@ class AppInstallerPlus {
       onError: onError,
       onProgress: onProgress,
       downloadFileName: downloadFileName,
+      onTimeLeft: onTimeLeft,
+      onSpeed: onSpeed,
+      onDownloadSize: onDownloadSize,
     );
   }
 
@@ -42,7 +46,8 @@ class AppInstallerPlus {
       Directory? downloadDirectory = await getExternalStorageDirectory();
       if (downloadDirectory == null) return false;
 
-      String apkPath = "${downloadDirectory.path}/${downloadFileName ?? 'downloadApk'}.apk";
+      String apkPath =
+          "${downloadDirectory.path}/${downloadFileName ?? 'downloadApk'}.apk";
 
       File file = File(apkPath);
 

@@ -1,1 +1,8 @@
-enum DownloadErrorType { networkTimeout, badResponse, noInternetConnection, storageAccessDenied, unknown, cancelled }
+enum DownloadErrorType {
+  networkTimeout,
+  badResponse,
+  noInternetConnection,
+  storageAccessDenied,
+  unknown,
+  cancelled
+}
