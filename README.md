@@ -1,20 +1,19 @@
-# 🔄 app_installer_plus
+# 🚀 app_installer_plus
 
-A Flutter plugin to **download and install APKs** on Android. Ideal for in-app updates or installing APKs from a URL.
+A robust, production-ready Flutter plugin to **download and safely install APKs** on Android devices. Ideal for handling seamless in-app updates or installing APKs directly from a URL.
 
-> ✅ Android-only | 📦 Installs APKs using FileProvider | 📊 Download progress support
+> ✅ **Android-only** | 📦 **FileProvider Integration** | 🛡️ **Leak-Proof Memory Management**
 
 ---
 
 ## ✨ Features
 
-- Download APK from any direct URL
-- Show real-time download progress
-- **[NEW]** Track downloaded size and total file size
-- **[NEW]** Track live download speed and estimated time left
-- **[NEW]** Cancel ongoing downloads
-- Automatically install the APK
-- Uses Android FileProvider to handle secure file access
+* 📥 **Direct URL Downloads:** Fetch APKs from any direct web URL.
+* 📊 **Granular Metrics:** Track real-time progress, download speed, time remaining, and byte sizes.
+* 🛡️ **Concurrency Protection:** Automatically prevents users from accidentally starting duplicate downloads.
+* 🧹 **Smart Auto-Cleanup [NEW]:** Option to automatically delete corrupted/partial files if a network error occurs (`deleteOnError`).
+* 🛑 **Advanced Cancellation [NEW]:** Cancel active downloads and optionally wipe the partial file from storage (`deletePartialDownload`).
+* 🚨 **Modern Error Handling [NEW]:** Catch specific failure states using `FileDownloadException` and `DownloadErrorType`.
 
 ---
 
@@ -53,24 +52,29 @@ A Flutter plugin to **download and install APKs** on Android. Ideal for in-app u
 **1. Apk Update**
 
 ```dart
-await AppInstallerPlus().downloadAndInstallApk(
-    downloadFileUrl: "https://www.example.com/myapp.apk",
-    onProgress: (progress) {
-      // handle the progress here
+import 'package:app_installer_plus/app_installer_plus.dart';
+
+Future<void> updateApp() async {
+  try {
+    await AppInstallerPlus().downloadAndInstallApk(
+      downloadFileUrl: "https://www.example.com/myapp.apk",
+      deleteOnError: true, // Automatically deletes partial file if network fails
+      onProgress: (progress) {
+        print("Download Progress: ${(progress * 100).toStringAsFixed(0)}%");
       },
-    onDownloadedSize: (downloadedSize) {
-      // handle the downloaded size here
-      },
-    onTotalSize: (totalSize) {
-      // handle the total size here
-      },
-    onSpeed: (speed) {
-      // handle the download speed here
-      },
-    onTimeLeft: (timeLeft) {
-      // handle the estimated time left here
-      },
-);
+      onDownloadedSize: (downloadedSize) => print("Downloaded: $downloadedSize"),
+      onTotalSize: (totalSize) => print("Total Size: $totalSize"),
+      onSpeed: (speed) => print("Speed: $speed"),
+      onTimeLeft: (timeLeft) => print("Time Left: $timeLeft"),
+    );
+  } on FileDownloadException catch (e) {
+    if (e.type == DownloadErrorType.alreadyRunning) {
+      print("A download is already in progress!");
+    } else {
+      print("Download failed: ${e.originalError}");
+    }
+  }
+}
 ```
 
 **2. Delete the downloaded apk**
@@ -82,7 +86,8 @@ await AppInstallerPlus().downloadAndInstallApk(
 
 **3. Cancel the download request**
 ```dart
-  AppInstallerPlus().cancelDownload();
+// Cancels the download and permanently wipes the incomplete file from storage
+await AppInstallerPlus().cancelDownload(deletePartialDownload: true);
 ```
 - Stops an active APK download before it finishes.
 
@@ -93,4 +98,5 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  app_installer_plus: ^1.1.0
+  app_installer_plus: ^1.2.0
+```

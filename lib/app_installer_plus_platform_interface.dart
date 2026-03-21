@@ -33,8 +33,10 @@ abstract class AppInstallerPlusPlatform extends PlatformInterface {
     void Function(String totalSize)? onTotalSize,
     void Function(String downloadedSize)? onDownloadedSize,
     String? downloadFileName,
+    bool deleteOnError = false,
   }) {
     throw UnimplementedError(
-        'downloadAndInstallApk() has not been implemented.');
+      'downloadAndInstallApk() has not been implemented.',
+    );
   }
 }

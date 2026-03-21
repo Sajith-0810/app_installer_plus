@@ -16,9 +16,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final TextEditingController _urlController = TextEditingController(
-    text: "https://uatapps2.netaccess-india.com/nacl/naclffa23.apk",
-  );
+  final TextEditingController _urlController = TextEditingController();
   double downloadPercent = 0;
   String totalSize = "0";
   String downloadSpeed = "0";
@@ -43,8 +41,10 @@ class _MyAppState extends State<MyApp> {
       backgroundColor: Colors.white,
 
       /// App Bar
-      appBar:
-          AppBar(title: const Text("App Update Example"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("App Update Example"),
+        centerTitle: true,
+      ),
 
       /// Body
       body: Center(
@@ -154,8 +154,9 @@ class _MyAppState extends State<MyApp> {
                             showSnackBar(message: "Apk Deleted Successfully");
                           } else {
                             showSnackBar(
-                                message:
-                                    "Deletion UnSuccessful. Either the file does not exist or an error occurred.");
+                              message:
+                                  "Deletion UnSuccessful. Either the file does not exist or an error occurred.",
+                            );
                           }
                         },
                         child: const Text("Delete Apk"),
@@ -172,7 +173,9 @@ class _MyAppState extends State<MyApp> {
                       padding: const EdgeInsets.all(12),
                       child: FilledButton(
                         onPressed: () async {
-                          AppInstallerPlus().cancelDownload();
+                          await AppInstallerPlus().cancelDownload(
+                            deletePartialDownload: true,
+                          );
                         },
                         child: const Text("Cancel Request"),
                       ),
@@ -263,6 +266,10 @@ class _MyAppState extends State<MyApp> {
           break;
         case DownloadErrorType.unknown:
           errorMessage = "An unknown error occurred. Please try again.";
+          break;
+        case DownloadErrorType.alreadyRunning:
+          errorMessage =
+              "A download task is currently active. Please wait for it to finish or cancel it.";
           break;
       }
 

@@ -4,5 +4,6 @@ enum DownloadErrorType {
   noInternetConnection,
   storageAccessDenied,
   unknown,
-  cancelled
+  alreadyRunning,
+  cancelled,
 }
